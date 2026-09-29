@@ -1,0 +1,168 @@
+ * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      background-color: #1a1a20;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar Panel */
+    #sidebar {
+      width: 320px;
+      background-color: #24242d;
+      border-right: 1px solid #333340;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid #333340;
+    }
+
+    h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.2rem;
+      color: #3b82f6;
+    }
+
+    /* Selected Tile Indicator */
+    .active-tile-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #1a1a20;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #3d3d4e;
+    }
+
+    .tile-preview {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #3b82f6;
+    }
+
+    /* Scrollable Palette Grid */
+    #palette-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      align-content: start;
+      background-color: #1d1d24;
+    }
+
+    .palette-tile {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #3a3a4a;
+      border-radius: 1px;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+
+    .palette-tile:hover {
+      border-color: #60a5fa;
+      transform: scale(1.1);
+      z-index: 2;
+    }
+
+    .palette-tile.selected {
+      border: 2px solid #3b82f6;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+
+    /* Editor Workspace */
+    #editor-viewport {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+      background-color: #121216;
+    }
+
+    /* Level Track Grid (DOM-based) */
+    #track-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 32px); /* Standard RS 5-column track */
+      gap: 1px;
+      background-color: #2a2a35;
+      padding: 1px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .grid-cell {
+      width: 32px;
+      height: 32px;
+      background-color: #17171c;
+      cursor: crosshair;
+    }
+
+    .grid-cell:hover {
+      outline: 1px solid rgba(255, 255, 255, 0.4);
+      z-index: 1;
+    }
+
+    .controls-info {
+      font-size: 0.82rem;
+      color: #9ca3af;
+      line-height: 1.4;
+    }
+
+    .export-btn {
+  /* Layout & Sizing */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  gap: 8px;
+
+  /* Typography */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+
+  /* Rounded Shape & Colors */
+  background-color: #2563eb; /* Solid clean blue */
+  border: none;
+  border-radius: 20px; /* Fully pill-rounded shape */
+  
+  /* Smooth Hover Transitions */
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  outline: none;
+}
+
+/* Darken slightly on hover (no glow/shadow) */
+.export-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Subtle physical click feedback */
+.export-btn:active {
+  background-color: #1e40af;
+  transform: scale(0.98);
+}
+
+/* Clean, non-glowing focus state for accessibility */
+.export-btn:focus-visible {
+  outline: 2px solid #1e40af;
+  outline-offset: 2px;
+}
+
+#icon {
+      border-radius: 10px;
+}

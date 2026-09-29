@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rolling Sky Web Editor</title>
+  <link rel="stylesheet" href="editor.css">
+  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="RS Editor" />
+<link rel="manifest" href="site.webmanifest" />
+</head>
+<body>
+
+  <!-- Sidebar Control & Palette -->
+  <div id="sidebar">
+    <div class="sidebar-section">
+      <h2>Rolling Sky Web Editor <img src="rsicon.png" id="icon" height="35"></h2>
+      <strong style="color: orange;">(Test Bulid 1.0.0)</strong>
+      <div class="active-tile-box">
+        <div id="active-tile-preview" class="tile-preview"></div>
+        <div>
+          <div style="font-size: 0.8rem; color: #aaa;">Selected Tile</div>
+          <div id="active-tile-id-text" style="font-weight: bold;">ID: 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px;">Tile Palette</div>
+      <div class="controls-info">Click any tile below to select it:</div>
+    </div>
+
+    <!-- Scrollable Palette Grid -->
+    <div id="palette-container"></div>
+
+    <div class="sidebar-section controls-info">
+      <strong>Grid Controls:</strong><br>
+      • <strong>Left Click + Drag:</strong> Paint selected tile<br>
+      • <strong>Right Click + Drag:</strong> Clear tile
+      <button id="exportBtn" class="export-btn" onclick="exportLevelText()">Export Level (.txt)</button>
+      
+    </div>
+    <p>Note: This is a test build, so you may find issues and bugs!</p>
+  </div>
+
+  <!-- Workspace -->
+  <div id="editor-viewport">
+    <div id="track-grid"></div>
+  </div>
+
+  <script src="editor.js"></script>
+</body>
+</html>
