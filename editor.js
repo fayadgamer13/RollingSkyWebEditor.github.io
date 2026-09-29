@@ -110,6 +110,7 @@ function initTrackGrid() {
       cell.dataset.row = r;
       cell.dataset.col = c;
 
+      // Mouse Controls
       cell.addEventListener('mousedown', (e) => {
         e.preventDefault();
         isMouseDown = true;
@@ -124,6 +125,39 @@ function initTrackGrid() {
       });
 
       trackGrid.appendChild(cell);
+    }
+  }
+
+  // Mobile Touch Controls
+  let isTouching = false;
+
+  trackGrid.addEventListener('touchstart', (e) => {
+    isTouching = true;
+    handleTouchPaint(e);
+  }, { passive: false });
+
+  trackGrid.addEventListener('touchmove', (e) => {
+    if (isTouching) {
+      e.preventDefault(); // Prevent page scroll while painting
+      handleTouchPaint(e);
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    isTouching = false;
+  });
+}
+
+// Helper to determine which grid cell is under the user's finger
+function handleTouchPaint(e) {
+  const touch = e.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  
+  if (target && target.classList.contains('grid-cell')) {
+    const r = parseInt(target.dataset.row, 10);
+    const c = parseInt(target.dataset.col, 10);
+    if (!isNaN(r) && !isNaN(c)) {
+      applyTileToCell(r, c);
     }
   }
 }

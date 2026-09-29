@@ -166,3 +166,50 @@
 #icon {
       border-radius: 10px;
 }
+
+/* --- Mobile Responsive Layout Overrides --- */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  /* Compact top panel on mobile */
+  #sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 2px solid #333340;
+  }
+
+  /* Scale up palette items for better touch targets */
+  #palette-container {
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .palette-tile {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Center viewport and allow natural scrolling */
+  #editor-viewport {
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+    touch-action: pan-x pan-y;
+  }
+
+  /* Enlarged cells for touch precision */
+  #track-grid {
+    grid-template-columns: repeat(5, 48px);
+  }
+
+  .grid-cell {
+    width: 48px;
+    height: 48px;
+  }
+}
