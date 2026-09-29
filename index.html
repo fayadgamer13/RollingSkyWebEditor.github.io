@@ -14,11 +14,14 @@
 </head>
 <body>
 
+  
+
+  
+
   <!-- Sidebar Control & Palette -->
   <div id="sidebar">
     <div class="sidebar-section">
       <h2>Rolling Sky Web Editor <img src="rsicon.png" id="icon" height="35"></h2>
-      <strong style="color: orange;">(Test Bulid 1.0.0)</strong>
       <div class="active-tile-box">
         <div id="active-tile-preview" class="tile-preview"></div>
         <div>
@@ -28,8 +31,30 @@
       </div>
     </div>
 
+    <div class="mobile-toolbar">
+  <button id="mobile-undo-btn" class="mobile-btn" title="Undo">↩ Undo</button>
+  <button id="mobile-redo-btn" class="mobile-btn" title="Redo">↪ Redo</button>
+  <button id="mobile-remove-btn" class="mobile-btn" title="Remove Tile">🧼 Eraser</button>
+
+<!-- Inside .mobile-toolbar -->
+<button id="mobile-clear-btn" class="mobile-btn" title="Clear Grid">🗑️ Clear</button>
+
+<!-- Clear Grid Warning Modal -->
+<div id="clear-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <h3>⚠️ Clear Grid</h3>
+    <p>Are you sure you want to clear the entire level? This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button id="cancel-clear-btn" class="mobile-btn">Cancel</button>
+      <button id="confirm-clear-btn" class="mobile-btn danger">Clear Level</button>
+    </div>
+  </div>
+</div>
+
+    <button id="settings-btn" class="mobile-btn" title="Settings">⚙️</button>
+</div>
+
     <div class="sidebar-section">
-      <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px;">Tile Palette</div>
       <div class="controls-info">Click any tile below to select it:</div>
     </div>
 
@@ -40,16 +65,40 @@
       <strong>Grid Controls:</strong><br>
       • <strong>Left Click + Drag:</strong> Paint selected tile<br>
       • <strong>Right Click + Drag:</strong> Clear tile
-      <button id="exportBtn" class="export-btn" onclick="exportLevelText()">Export Level (.txt)</button>
+     
       
     </div>
-    <p>Note: This is a test build, so you may find issues and bugs!</p>
   </div>
 
   <!-- Workspace -->
   <div id="editor-viewport">
     <div id="track-grid"></div>
   </div>
+
+  <!-- Inside #sidebar or .mobile-toolbar -->
+
+
+<!-- Settings Modal Window -->
+<div id="settings-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <h3>Grid Settings</h3>
+    
+    <label for="grid-rows-input">Level Length (Rows):</label>
+    <input type="number" id="grid-rows-input" min="10" max="5000" value="1200" />
+    <span class="input-hint">Limit: 10 – 5,000 rows (Default: 1200)</span>
+
+       <button id="exportBtn" class="export-btn" onclick="exportLevelText()">💾 Export Level (.txt)</button>
+  <div class="import-container">
+  <input type="file" id="import-file-input" accept=".txt" style="display: none;" />
+  <button id="import-btn" class="editor-btn">📂 Import Level.txt</button>
+</div>
+
+    <div class="modal-actions">
+      <button id="close-settings-btn" class="mobile-btn">Cancel</button>
+      <button id="apply-settings-btn" class="mobile-btn active">Apply Changes</button>
+    </div>
+  </div>
+</div>
 
   <script src="editor.js"></script>
 </body>
