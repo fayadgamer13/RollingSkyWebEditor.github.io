@@ -13,7 +13,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
 <body>
-
   
 
   
@@ -52,28 +51,29 @@
 </div>
 
     <button id="settings-btn" class="mobile-btn" title="Settings">⚙️</button>
+    
 </div>
 
     <div class="sidebar-section">
-      <div class="controls-info">Click any tile below to select it:</div>
-    </div>
+  <div class="search-box">
+    <input type="number" id="tile-search-input" placeholder="Search Tile ID (1-2840)..." min="1" max="2840" />
+    <button id="tile-search-btn" class="mobile-btn">🔍</button>
+  </div>
+</div>
 
     <!-- Scrollable Palette Grid -->
     <div id="palette-container"></div>
-
-    <div class="sidebar-section controls-info">
-      <strong>Grid Controls:</strong><br>
-      • <strong>Left Click + Drag:</strong> Paint selected tile<br>
-      • <strong>Right Click + Drag:</strong> Clear tile
-     
-      
-    </div>
   </div>
 
   <!-- Workspace -->
-  <div id="editor-viewport">
-    <div id="track-grid"></div>
+ <div id="editor-viewport">
+    <div class="grid-wrapper">
+      <div id="grid-row-labels"></div>
+      <div id="track-grid"></div>
+    </div>
   </div>
+
+  
 
   <!-- Inside #sidebar or .mobile-toolbar -->
 
@@ -91,6 +91,17 @@
   <div class="import-container">
   <input type="file" id="import-file-input" accept=".txt" style="display: none;" />
   <button id="import-btn" class="editor-btn">📂 Import Level.txt</button>
+</div>
+
+<div class="setting-row">
+  <label for="theme-grid-toggle">Enable Theme.txt (Not Available yet!):</label>
+  <input type="checkbox" id="theme-grid-toggle" />
+</div>
+
+<!-- Inside #settings-modal .modal-content -->
+<div class="setting-row">
+  <label for="auto-load-toggle">Auto-load previous level on refresh:</label>
+  <input type="checkbox" id="auto-load-toggle" />
 </div>
 
     <div class="modal-actions">

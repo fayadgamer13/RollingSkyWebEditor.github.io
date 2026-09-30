@@ -71,7 +71,7 @@
       width: 32px;
       height: 32px;
       border: 1px solid #3a3a4a;
-      border-radius: 1px;
+      border-radius: 2px;
       cursor: pointer;
       transition: transform 0.1s, border-color 0.1s;
     }
@@ -102,13 +102,13 @@
 
     /* Level Track Grid (DOM-based) */
     #track-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 32px); /* Standard RS 5-column track */
-      gap: 1px;
-      background-color: #2a2a35;
-      padding: 1px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      touch-action: none; /* Prevents viewport dragging while drawing */
+    display: grid;
+  grid-template-columns: repeat(5, 32px); /* Fixed from 36px */
+  gap: 1px;
+  background-color: #2a2a35;
+  padding: 1px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  touch-action: none;
     }
 
     .grid-cell {
@@ -345,4 +345,173 @@ display: flex;
 .mobile-btn.danger:hover,
 .mobile-btn.danger:active {
   background-color: #c9302c;
+}
+
+.grid-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px; /* Space between numbers and grid */
+}
+
+#grid-row-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 1px; /* Matches grid cell gap */
+  padding-top: 1px; /* Align with track-grid padding */
+}
+
+.grid-row-label {
+  width: 28px;
+  height: 32px; /* Matches desktop .grid-cell height */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8888a0;
+  background: transparent;
+  user-select: none;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: bold;
+}
+
+.setting-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.search-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#tile-search-input {
+  flex: 1;
+  padding: 8px 10px;
+  background-color: #1a1a20;
+  border: 1px solid #3d3d4e;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+#tile-search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Flash highlight animation when a searched tile is found */
+@keyframes tileHighlight {
+  0% { transform: scale(1.2); border-color: #f59e0b; box-shadow: 0 0 12px #f59e0b; }
+  100% { transform: scale(1); }
+}
+
+.palette-tile.search-highlight {
+  animation: tileHighlight 0.5s ease-out;
+  border: 2px solid #f59e0b !important;
+}
+
+/* Theme Grid Styling */
+#theme-grid {
+  display: grid;
+  grid-template-columns: 32px;
+  gap: 1px;
+  background-color: #1e1e24;
+  padding: 1px;
+  touch-action: none;
+}
+
+/* Hide theme grid if turned off */
+#theme-grid.hidden {
+  display: none !important;
+}
+
+.theme-cell {
+  width: 32px;
+  height: 32px;
+  background-color: #121218;
+  border: 1px dashed #3d3d4e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #a0a0b0;
+  box-sizing: border-box;
+}
+
+.theme-cell:hover {
+  border-color: #3b82f6;
+  background-color: #1e293b;
+}
+
+/* Theme Picker Modal */
+.theme-modal-content {
+  max-width: 480px;
+  width: 90%;
+}
+
+#theme-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #111116;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.theme-palette-item {
+  width: 40px;
+  height: 40px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  background-size: cover;
+}
+
+.theme-palette-item:hover {
+  border-color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.theme-palette-item span {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 1px 3px;
+  border-top-left-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  #theme-grid {
+    grid-template-columns: 48px;
+  }
+  .theme-cell {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+#swipe-dialog {      /* Limits the box height to 80% of the screen height */
+  overflow-y: auto;       /* Adds a vertical scrollbar only when content overflows */
+  
+  /* Optional: Smooth scrolling for better user experience */
+  scroll-behavior: smooth;
 }
