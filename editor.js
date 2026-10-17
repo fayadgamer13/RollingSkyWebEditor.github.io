@@ -1,4 +1,86 @@
-// --- Mobile Button Event Listeners ---
+// --- Global State & Storage Keys ---
+const STORAGE_KEY_LEVEL = 'rs_saved_level_data';
+const STORAGE_KEY_AUTOLOAD = 'rs_autoload_enabled';
+const STORAGE_KEY_CELL_BG = 'rs_cell_bg_color';
+const STORAGE_KEY_GRID_BG = 'rs_grid_bg_color';
+const STORAGE_KEY_THEME_MODE = 'rs_theme_mode';
+
+// Defaults
+const DEFAULT_CELL_BG = '#17171c';
+const DEFAULT_GRID_BG = '#2a2a35';
+const DEFAULT_ROWS = 1200;
+const DEFAULT_AUTOLOAD = true;
+const DEFAULT_THEME_MODE = 'dark'; // 'dark' | 'light' | 'auto'
+
+let cellBgColor = localStorage.getItem(STORAGE_KEY_CELL_BG) || DEFAULT_CELL_BG;
+let gridBgColor = localStorage.getItem(STORAGE_KEY_GRID_BG) || DEFAULT_GRID_BG;
+let currentThemeMode = localStorage.getItem(STORAGE_KEY_THEME_MODE) || DEFAULT_THEME_MODE;
+
+let autoLoadEnabled = localStorage.getItem(STORAGE_KEY_AUTOLOAD) !== 'false';
+let isPickerActive = false; // State for tile picker (eyedropper) mode
+
+const NATIVE_TILE_SIZE = 64;  
+const DISPLAY_TILE_SIZE = 32; 
+const TOTAL_TILES = 2840;      
+const GRID_COLS = 5;          
+let GRID_ROWS = DEFAULT_ROWS;
+const undoStack = [];
+const redoStack = [];
+const MAX_HISTORY = 50; 
+let currentStroke = null;         
+
+let activeTileId = 0;
+let isMouseDown = false;
+let mouseButton = 0;
+const tileRegistry = new Map();
+let levelData = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(-1));
+
+// --- Tile Class ---
+class Tile {
+  constructor(index, sheetColumns, totalWidth, sourceTileSize = 64, displayTileSize = 32) {
+    this.id = index + 1;
+    this.name = `Tile #${this.id}`;
+    this.sourceTileSize = sourceTileSize;
+    this.displayTileSize = displayTileSize;
+    this.sheetColumns = sheetColumns;
+
+    this.cropX = (index % this.sheetColumns) * this.sourceTileSize;
+    this.cropY = Math.floor(index / this.sheetColumns) * this.sourceTileSize;
+
+    this.scale = this.displayTileSize / this.sourceTileSize; 
+    this.scaledSheetWidth = totalWidth * this.scale;
+  }
+
+  applyStyle(element) {
+    element.style.backgroundImage = "url('Tileset.png')";
+    element.style.backgroundRepeat = "no-repeat";
+    element.style.backgroundPosition = `-${this.cropX * this.scale}px -${this.cropY * this.scale}px`;
+    element.style.backgroundSize = `${this.scaledSheetWidth}px auto`;
+    element.style.imageRendering = "pixelated";
+  }
+}
+
+// --- Theme Management ---
+function updateAppTheme(mode) {
+  currentThemeMode = mode;
+  localStorage.setItem(STORAGE_KEY_THEME_MODE, mode);
+
+  if (mode === 'auto') {
+    const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', isSystemDark ? 'dark' : 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', mode);
+  }
+}
+
+// System theme listener for Auto mode
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (currentThemeMode === 'auto') {
+    document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+  }
+});
+
+// --- Event Listeners & Mobile Toolbar ---
 document.addEventListener('DOMContentLoaded', () => {
   const undoBtn = document.getElementById('mobile-undo-btn');
   const redoBtn = document.getElementById('mobile-redo-btn');
@@ -13,16 +95,79 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelClearBtn = document.getElementById('cancel-clear-btn');
   const confirmClearBtn = document.getElementById('confirm-clear-btn');
   const autoLoadToggle = document.getElementById('auto-load-toggle');
+  const themeToggle = document.getElementById('theme-grid-toggle');
+  const themeModeSelect = document.getElementById('theme-mode-select');
   const searchInput = document.getElementById('tile-search-input');
   const searchBtn = document.getElementById('tile-search-btn');
-  
-  
+  const pickerBtn = document.getElementById('mobile-picker-btn');
 
-  // Initialize setting checkbox & rows when opening Settings modal
+  // Reset Modal elements
+  const resetDefaultOpenBtn = document.getElementById('reset-default-open-btn');
+  const resetModal = document.getElementById('reset-defaults-modal');
+  const cancelResetBtn = document.getElementById('cancel-reset-btn');
+  const confirmResetBtn = document.getElementById('confirm-reset-btn');
+
+  // Color Input Elements
+  const cellBgInput = document.getElementById('cell-bg-color-input');
+  const gridBgInput = document.getElementById('grid-bg-color-input');
+
+  // Apply Theme on Initial Load
+  updateAppTheme(currentThemeMode);
+  if (themeModeSelect) themeModeSelect.value = currentThemeMode;
+
+  // Real-time Theme Mode Selector
+  if (themeModeSelect) {
+    themeModeSelect.addEventListener('change', (e) => {
+      updateAppTheme(e.target.value);
+    });
+  }
+
+  // Load saved colors or fall back to defaults
+  const savedCellBg = localStorage.getItem(STORAGE_KEY_CELL_BG) || DEFAULT_CELL_BG;
+  const savedGridBg = localStorage.getItem(STORAGE_KEY_GRID_BG) || DEFAULT_GRID_BG;
+
+  applyColor('--grid-cell-bg', savedCellBg, cellBgInput);
+  applyColor('--track-grid-bg', savedGridBg, gridBgInput);
+
+  if (cellBgInput) {
+    cellBgInput.addEventListener('input', (e) => {
+      const color = e.target.value;
+      document.documentElement.style.setProperty('--grid-cell-bg', color);
+      localStorage.setItem(STORAGE_KEY_CELL_BG, color);
+    });
+  }
+
+  if (gridBgInput) {
+    gridBgInput.addEventListener('input', (e) => {
+      const color = e.target.value;
+      document.documentElement.style.setProperty('--track-grid-bg', color);
+      localStorage.setItem(STORAGE_KEY_GRID_BG, color);
+    });
+  }
+
+  function applyColor(cssVar, colorValue, inputElement) {
+    document.documentElement.style.setProperty(cssVar, colorValue);
+    if (inputElement) inputElement.value = colorValue;
+  }
+
+  // Tile Picker Toggle Button
+  if (pickerBtn) {
+    pickerBtn.addEventListener('click', () => {
+      isPickerActive = !isPickerActive;
+      if (isPickerActive) {
+        pickerBtn.classList.add('active');
+      } else {
+        pickerBtn.classList.remove('active');
+      }
+    });
+  }
+
+  // Settings Modal Controls
   if (settingsBtn && settingsModal) {
     settingsBtn.addEventListener('click', () => {
       if (rowsInput) rowsInput.value = GRID_ROWS;
       if (autoLoadToggle) autoLoadToggle.checked = autoLoadEnabled;
+      if (themeModeSelect) themeModeSelect.value = currentThemeMode;
       settingsModal.style.display = 'flex';
     });
 
@@ -38,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(newRows) || newRows < 10) newRows = 10;
         if (newRows > 5000) newRows = 5000;
 
-        // Save setting preference
         if (autoLoadToggle) {
           autoLoadEnabled = autoLoadToggle.checked;
           localStorage.setItem(STORAGE_KEY_AUTOLOAD, autoLoadEnabled);
@@ -51,6 +195,62 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.style.display = 'none';
       });
     }
+  }
+
+  // --- Reset Default Settings Selector Modal Logic ---
+  if (resetDefaultOpenBtn && resetModal) {
+    resetDefaultOpenBtn.addEventListener('click', () => {
+      resetModal.style.display = 'flex';
+    });
+  }
+
+  if (cancelResetBtn && resetModal) {
+    cancelResetBtn.addEventListener('click', () => {
+      resetModal.style.display = 'none';
+    });
+  }
+
+  if (confirmResetBtn && resetModal) {
+    confirmResetBtn.addEventListener('click', () => {
+      const resetThemeMode = document.getElementById('reset-opt-theme-mode')?.checked;
+      const resetCellColor = document.getElementById('reset-opt-cell-color')?.checked;
+      const resetGridColor = document.getElementById('reset-opt-grid-color')?.checked;
+      const resetRows = document.getElementById('reset-opt-rows')?.checked;
+      const resetTheme = document.getElementById('reset-opt-theme')?.checked;
+      const resetAutoLoad = document.getElementById('reset-opt-autoload')?.checked;
+
+      if (resetThemeMode) {
+        updateAppTheme(DEFAULT_THEME_MODE);
+        if (themeModeSelect) themeModeSelect.value = DEFAULT_THEME_MODE;
+      }
+
+      if (resetCellColor) {
+        applyColor('--grid-cell-bg', DEFAULT_CELL_BG, cellBgInput);
+        localStorage.setItem(STORAGE_KEY_CELL_BG, DEFAULT_CELL_BG);
+      }
+
+      if (resetGridColor) {
+        applyColor('--track-grid-bg', DEFAULT_GRID_BG, gridBgInput);
+        localStorage.setItem(STORAGE_KEY_GRID_BG, DEFAULT_GRID_BG);
+      }
+
+      if (resetRows) {
+        if (rowsInput) rowsInput.value = DEFAULT_ROWS;
+        resizeGrid(DEFAULT_ROWS);
+      }
+
+      if (resetTheme && themeToggle) {
+        themeToggle.checked = false;
+      }
+
+      if (resetAutoLoad) {
+        autoLoadEnabled = DEFAULT_AUTOLOAD;
+        if (autoLoadToggle) autoLoadToggle.checked = DEFAULT_AUTOLOAD;
+        localStorage.setItem(STORAGE_KEY_AUTOLOAD, DEFAULT_AUTOLOAD);
+      }
+
+      resetModal.style.display = 'none';
+    });
   }
 
   // Clear Modal
@@ -97,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Import Action
+  // Import File Listener
   const importBtn = document.getElementById('import-btn');
   const fileInput = document.getElementById('import-file-input');
 
@@ -117,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Tile Search Listeners
+  // Search Functionality
   function searchAndSelectTile() {
     if (!searchInput) return;
     const tileId = parseInt(searchInput.value, 10);
@@ -144,9 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (searchBtn) {
-    searchBtn.addEventListener('click', searchAndSelectTile);
-  }
+  if (searchBtn) searchBtn.addEventListener('click', searchAndSelectTile);
 
   if (searchInput) {
     searchInput.addEventListener('keydown', (e) => {
@@ -158,51 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-class Tile {
-  constructor(index, sheetColumns, totalWidth, sourceTileSize = 64, displayTileSize = 32) {
-    this.id = index + 1;
-    this.name = `Tile #${this.id}`;
-    this.sourceTileSize = sourceTileSize;
-    this.displayTileSize = displayTileSize;
-    this.sheetColumns = sheetColumns;
-
-    this.cropX = (index % this.sheetColumns) * this.sourceTileSize;
-    this.cropY = Math.floor(index / this.sheetColumns) * this.sourceTileSize;
-
-    this.scale = this.displayTileSize / this.sourceTileSize; 
-    this.scaledSheetWidth = totalWidth * this.scale;
-  }
-
-  applyStyle(element) {
-    element.style.backgroundImage = "url('Tileset.png')";
-    element.style.backgroundRepeat = "no-repeat";
-    element.style.backgroundPosition = `-${this.cropX * this.scale}px -${this.cropY * this.scale}px`;
-    element.style.backgroundSize = `${this.scaledSheetWidth}px auto`;
-    element.style.imageRendering = "pixelated";
-  }
-}
-
-const STORAGE_KEY_LEVEL = 'rs_saved_level_data';
-const STORAGE_KEY_AUTOLOAD = 'rs_autoload_enabled';
-
-let autoLoadEnabled = localStorage.getItem(STORAGE_KEY_AUTOLOAD) !== 'false';
-
-const NATIVE_TILE_SIZE = 64;  
-const DISPLAY_TILE_SIZE = 32; 
-const TOTAL_TILES = 2840;      
-const GRID_COLS = 5;          
-let GRID_ROWS = 1200;
-const undoStack = [];
-const redoStack = [];
-const MAX_HISTORY = 50; 
-let currentStroke = null;         
-
-let activeTileId = 0;
-let isMouseDown = false;
-let mouseButton = 0;
-const tileRegistry = new Map();
-let levelData = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(-1));
-
+// --- Asset Loader & Engine Init ---
 const spriteImg = new Image();
 spriteImg.src = 'Tileset.png';
 spriteImg.onload = () => {
@@ -268,6 +422,10 @@ function selectTile(tileId, tileElement) {
 
   const removeBtn = document.getElementById('mobile-remove-btn');
   if (removeBtn) removeBtn.classList.remove('active');
+
+  const pickerBtn = document.getElementById('mobile-picker-btn');
+  if (pickerBtn) pickerBtn.classList.remove('active');
+  isPickerActive = false;
 
   document.querySelectorAll('.palette-tile').forEach(el => el.classList.remove('selected'));
   if (tileElement) {
@@ -358,6 +516,30 @@ function handleTouchPaint(e) {
 }
 
 function applyTileToCell(r, c) {
+  const sampledTileId = levelData[r][c];
+
+  if (isPickerActive) {
+    if (sampledTileId > 0) {
+      const paletteTiles = document.querySelectorAll('.palette-tile');
+      const targetElement = paletteTiles[sampledTileId - 1];
+      selectTile(sampledTileId, targetElement);
+    } else {
+      activeTileId = -1;
+      document.querySelectorAll('.palette-tile').forEach(el => el.classList.remove('selected'));
+      
+      const idTextEl = document.getElementById('active-tile-id-text');
+      if (idTextEl) idTextEl.innerText = 'ID: Eraser';
+
+      const previewEl = document.getElementById('active-tile-preview');
+      if (previewEl) previewEl.style.backgroundImage = 'none';
+    }
+
+    isPickerActive = false;
+    const pickerBtn = document.getElementById('mobile-picker-btn');
+    if (pickerBtn) pickerBtn.classList.remove('active');
+    return;
+  }
+
   const targetTileId = (mouseButton === 0) ? activeTileId : -1;
   const previousTileId = levelData[r][c];
 
@@ -367,66 +549,21 @@ function applyTileToCell(r, c) {
   }
 }
 
-window.addEventListener('mouseup', () => {
-  isMouseDown = false;
-});
-
-const viewport = document.getElementById('editor-viewport');
-if (viewport) {
-  viewport.addEventListener('contextmenu', e => e.preventDefault());
-}
-
-function exportLevelText() {
-  try {
-    const levelName = "Level1.txt";
-    const width = GRID_COLS;       
-    const height = GRID_ROWS;     
-    const tileWidth = 40;
-    const tileHeight = 40;
-    const orientation = "orthogonal";
-    const tilesetPath = "../../../../../Tiled/tileMap01.png";
-    const layerType = "Level 1";
-
-    let output = `[header]\n`;
-    output += `width=${width}\n`;
-    output += `height=${height}\n`;
-    output += `tilewidth=${tileWidth}\n`;
-    output += `tileheight=${tileHeight}\n`;
-    output += `orientation=${orientation}\n\n`;
-
-    output += `[tilesets]\n`;
-    output += `tileset=${tilesetPath},${tileWidth},${tileHeight},0,0\n\n`;
-
-    output += `[layer]\n`;
-    output += `type=${layerType}\n`;
-    output += `data=\n`;
-
-    for (let r = height - 1; r >= 0; r--) {
-      let row = [];
-      for (let c = 0; c < width; c++) {
-        let cellValue = levelData[r] ? levelData[r][c] : -1;
-        let tileId = (cellValue !== undefined && cellValue !== -1) ? cellValue : 0;
-        row.push(tileId);
-      }
-      output += row.join(",") + ",\n";
+function applyTileToCellRaw(r, c, tileId) {
+  levelData[r][c] = tileId;
+  const cell = document.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+  if (cell) {
+    if (tileId <= 0) {
+      cell.style.backgroundImage = 'none';
+    } else {
+      const tileObj = tileRegistry.get(tileId);
+      if (tileObj) tileObj.applyStyle(cell);
     }
-
-    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = levelName;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setTimeout(() => URL.revokeObjectURL(link.href), 100);
-
-  } catch (err) {
-    console.error("Export failed:", err);
   }
+  saveLevelToStorage();
 }
 
+// --- History & Strokes ---
 function recordTileChange(r, c, oldTileId, newTileId) {
   if (oldTileId === newTileId) return;
   
@@ -477,20 +614,6 @@ function redo() {
   undoStack.push(undoStroke);
 }
 
-function applyTileToCellRaw(r, c, tileId) {
-  levelData[r][c] = tileId;
-  const cell = document.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
-  if (cell) {
-    if (tileId <= 0) {
-      cell.style.backgroundImage = 'none';
-    } else {
-      const tileObj = tileRegistry.get(tileId);
-      if (tileObj) tileObj.applyStyle(cell);
-    }
-  }
-  saveLevelToStorage();
-}
-
 window.addEventListener('mouseup', () => {
   isMouseDown = false;
   commitStroke();
@@ -514,6 +637,63 @@ window.addEventListener('keydown', (e) => {
     redo();
   }
 });
+
+const viewport = document.getElementById('editor-viewport');
+if (viewport) {
+  viewport.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+// --- Import / Export / Storage ---
+function exportLevelText() {
+  try {
+    const levelName = "Level1.txt";
+    const width = GRID_COLS;       
+    const height = GRID_ROWS;     
+    const tileWidth = 40;
+    const tileHeight = 40;
+    const orientation = "orthogonal";
+    const tilesetPath = "../../../../../Tiled/tileMap01.png";
+    const layerType = "Level 1";
+
+    let output = `[header]\n`;
+    output += `width=${width}\n`;
+    output += `height=${height}\n`;
+    output += `tilewidth=${tileWidth}\n`;
+    output += `tileheight=${tileHeight}\n`;
+    output += `orientation=${orientation}\n\n`;
+
+    output += `[tilesets]\n`;
+    output += `tileset=${tilesetPath},${tileWidth},${tileHeight},0,0\n\n`;
+
+    output += `[layer]\n`;
+    output += `type=${layerType}\n`;
+    output += `data=\n`;
+
+    for (let r = height - 1; r >= 0; r--) {
+      let row = [];
+      for (let c = 0; c < width; c++) {
+        let cellValue = levelData[r] ? levelData[r][c] : -1;
+        let tileId = (cellValue !== undefined && cellValue !== -1) ? cellValue : 0;
+        row.push(tileId);
+      }
+      output += row.join(",") + ",\n";
+    }
+
+    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = levelName;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => URL.revokeObjectURL(link.href), 100);
+
+  } catch (err) {
+    console.error("Export failed:", err);
+  }
+}
 
 function importLevelText(fileText) {
   try {
@@ -645,8 +825,4 @@ function loadLevelFromStorage() {
     console.warn("Failed to restore level from localStorage:", err);
     return false;
   }
-  
 }
-
-
-
